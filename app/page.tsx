@@ -1,65 +1,89 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Zap, Palette, Shield } from "lucide-react";
 
+// 홈 페이지 (Server Component)
 export default function Home() {
+  const techStack = [
+    "Next.js 16", "React 19", "TypeScript 5",
+    "Tailwind CSS 4", "shadcn/ui", "Radix UI",
+  ];
+
+  const features = [
+    {
+      icon: Zap,
+      title: "빠른 시작",
+      description: "App Router, RSC, 최신 Next.js 16 기반으로 즉시 개발을 시작할 수 있습니다.",
+    },
+    {
+      icon: Palette,
+      title: "아름다운 디자인",
+      description: "shadcn/ui와 Tailwind CSS 4의 OKLCH 컬러로 모던하고 일관된 UI를 제공합니다.",
+    },
+    {
+      icon: Shield,
+      title: "타입 안전성",
+      description: "TypeScript strict 모드로 런타임 오류를 사전에 방지하고 코드 품질을 높입니다.",
+    },
+  ];
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="mx-auto max-w-6xl px-4 py-16">
+      {/* 히어로 섹션 */}
+      <section className="text-center mb-20">
+        <Badge variant="secondary" className="mb-4">
+          Next.js 16 + React 19
+        </Badge>
+        <h1 className="text-4xl font-bold tracking-tight mb-4 md:text-6xl">
+          Next.js Starter Kit
+        </h1>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+          현대적인 웹 개발을 위한 완전한 스타터킷. 최신 기술 스택으로
+          빠르게 프로덕션 수준의 앱을 만들어 보세요.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button asChild size="lg">
+            <Link href="/components">컴포넌트 살펴보기</Link>
+          </Button>
+          <Button asChild variant="outline" size="lg">
+            <Link href="/about">기술 스택 보기</Link>
+          </Button>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* 기능 카드 섹션 */}
+      <section className="mb-20">
+        <h2 className="text-2xl font-semibold text-center mb-10">주요 특징</h2>
+        <div className="grid gap-6 md:grid-cols-3">
+          {features.map(({ icon: Icon, title, description }) => (
+            <Card key={title}>
+              <CardHeader>
+                <div className="mb-2 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Icon className="h-5 w-5 text-primary" />
+                </div>
+                <CardTitle>{title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>{description}</CardDescription>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      </main>
+      </section>
+
+      {/* 기술 배지 섹션 */}
+      <section className="text-center">
+        <h2 className="text-xl font-semibold mb-6 text-muted-foreground">기술 스택</h2>
+        <div className="flex flex-wrap gap-2 justify-center">
+          {techStack.map((tech) => (
+            <Badge key={tech} variant="outline" className="text-sm py-1 px-3">
+              {tech}
+            </Badge>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
