@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash",
+      "WebFetch",
+      "mcp__playwright",
+      "Skill(git:commit)"
+    ],
+    "deny": []
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "playwright"
+  ]
+}
