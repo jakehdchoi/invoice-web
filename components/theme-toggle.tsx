@@ -1,16 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function ThemeToggle() {
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    // 마운트 시 현재 테마 상태 동기화
-    setIsDark(document.documentElement.classList.contains("dark"));
-  }, []);
+  // 마운트 시 현재 테마 상태 동기화 (함수형 초기화로 DOM 직접 읽기)
+  const [isDark, setIsDark] = useState(
+    () => typeof window !== "undefined" && document.documentElement.classList.contains("dark")
+  );
 
   function toggleTheme() {
     const root = document.documentElement;
