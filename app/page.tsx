@@ -3,13 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Zap, Palette, Shield } from "lucide-react";
+import { TECH_STACK } from "@/lib/constants";
 
 // 홈 페이지 (Server Component)
 export default function Home() {
-  const techStack = [
-    "Next.js 16", "React 19", "TypeScript 5",
-    "Tailwind CSS 4", "shadcn/ui", "Radix UI",
-  ];
 
   const features = [
     {
@@ -77,9 +74,9 @@ export default function Home() {
       <section className="text-center">
         <h2 className="text-xl font-semibold mb-6 text-muted-foreground">기술 스택</h2>
         <div className="flex flex-wrap gap-2 justify-center">
-          {techStack.map((tech) => (
-            <Badge key={tech} variant="outline" className="text-sm py-1 px-3">
-              {tech}
+          {TECH_STACK.map(({ name }) => (
+            <Badge key={name} variant="outline" className="text-sm py-1 px-3">
+              {name}
             </Badge>
           ))}
         </div>

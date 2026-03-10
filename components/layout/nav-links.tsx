@@ -10,7 +10,13 @@ const links = [
   { href: "/components", label: "컴포넌트" },
 ];
 
-export function NavLinks({ className }: { className?: string }) {
+interface NavLinksProps {
+  className?: string
+  // 링크 클릭 시 호출 (모바일 메뉴 닫기 등)
+  onLinkClick?: () => void
+}
+
+export function NavLinks({ className, onLinkClick }: NavLinksProps) {
   const pathname = usePathname();
 
   return (
@@ -19,6 +25,7 @@ export function NavLinks({ className }: { className?: string }) {
         <Link
           key={href}
           href={href}
+          onClick={onLinkClick}
           className={cn(
             "text-sm font-medium transition-colors hover:text-foreground",
             pathname === href
