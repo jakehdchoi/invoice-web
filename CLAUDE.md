@@ -65,3 +65,8 @@ npx shadcn@latest add <component-name>
 ```
 
 컴포넌트는 `components/ui/`에 생성되며, `cn()` 유틸리티와 CSS 변수 기반 테마를 사용.
+
+## Project Context
+
+- PRD 문서: @docs/PRD.md
+- 개발 로드맵: @docs/ROADMAP.md
