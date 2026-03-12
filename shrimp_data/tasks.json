@@ -1,0 +1,209 @@
+{
+  "tasks": [
+    {
+      "id": "924bc9ec-cd3b-4871-a81a-4e3c04b39b1c",
+      "name": "패키지 설치 및 환경 변수 설정",
+      "description": "jose 패키지 설치 및 .env.local에 ADMIN_PASSWORD, JWT_SECRET 환경 변수 추가",
+      "status": "pending",
+      "dependencies": [],
+      "createdAt": "2026-03-12T13:32:42.024Z",
+      "updatedAt": "2026-03-12T13:32:42.025Z",
+      "relatedFiles": [
+        {
+          "path": "package.json",
+          "type": "TO_MODIFY",
+          "description": "jose 의존성 추가"
+        },
+        {
+          "path": ".env.local",
+          "type": "TO_MODIFY",
+          "description": "환경 변수 추가"
+        }
+      ],
+      "implementationGuide": "1. npm install jose 실행\n2. .env.local에 추가:\n   ADMIN_PASSWORD=your-secure-password\n   JWT_SECRET=your-jwt-secret-key-min-32-chars\n3. .env.example 파일이 있다면 업데이트 (없으면 생성)",
+      "verificationCriteria": "node_modules에 jose 패키지 존재, .env.local에 두 환경 변수 설정 확인",
+      "analysisResult": "Task 006: 관리자 인증 시스템 구축. 환경 변수 기반 비밀번호 인증과 jose JWT 세션 관리로 /admin 경로를 보호. Next.js 15 App Router, TypeScript, shadcn/ui 사용. Edge Runtime 호환을 위해 jose 라이브러리 사용."
+    },
+    {
+      "id": "db1c3aa3-7de6-43b1-b595-52e5711b22a9",
+      "name": "JWT 유틸리티 구현",
+      "description": "lib/auth.ts 파일에 JWT 생성/검증 유틸리티 함수 구현",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "924bc9ec-cd3b-4871-a81a-4e3c04b39b1c"
+        }
+      ],
+      "createdAt": "2026-03-12T13:32:42.025Z",
+      "updatedAt": "2026-03-12T13:32:42.025Z",
+      "relatedFiles": [
+        {
+          "path": "lib/auth.ts",
+          "type": "CREATE",
+          "description": "JWT 유틸리티 함수"
+        }
+      ],
+      "implementationGuide": "// lib/auth.ts\nimport { SignJWT, jwtVerify } from 'jose'\n\nexport const ADMIN_SESSION_COOKIE = 'admin_session'\nconst secret = new TextEncoder().encode(process.env.JWT_SECRET)\n\nexport async function signJwt(payload: Record<string, unknown>) {\n  return new SignJWT(payload)\n    .setProtectedHeader({ alg: 'HS256' })\n    .setExpirationTime('1d')\n    .sign(secret)\n}\n\nexport async function verifyJwt(token: string) {\n  try {\n    const { payload } = await jwtVerify(token, secret)\n    return payload\n  } catch {\n    return null\n  }\n}",
+      "verificationCriteria": "lib/auth.ts 파일 생성, signJwt/verifyJwt/ADMIN_SESSION_COOKIE export 확인",
+      "analysisResult": "Task 006: 관리자 인증 시스템 구축. 환경 변수 기반 비밀번호 인증과 jose JWT 세션 관리로 /admin 경로를 보호. Next.js 15 App Router, TypeScript, shadcn/ui 사용. Edge Runtime 호환을 위해 jose 라이브러리 사용."
+    },
+    {
+      "id": "cab183a3-4890-45b0-811c-6cdad6f47b9a",
+      "name": "로그인/로그아웃 API 구현",
+      "description": "app/api/auth/login/route.ts와 app/api/auth/logout/route.ts 구현",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "db1c3aa3-7de6-43b1-b595-52e5711b22a9"
+        }
+      ],
+      "createdAt": "2026-03-12T13:32:42.025Z",
+      "updatedAt": "2026-03-12T13:32:42.025Z",
+      "relatedFiles": [
+        {
+          "path": "app/api/auth/login/route.ts",
+          "type": "CREATE",
+          "description": "로그인 API"
+        },
+        {
+          "path": "app/api/auth/logout/route.ts",
+          "type": "CREATE",
+          "description": "로그아웃 API"
+        },
+        {
+          "path": "lib/auth.ts",
+          "type": "DEPENDENCY",
+          "description": "JWT 유틸리티"
+        }
+      ],
+      "implementationGuide": "// app/api/auth/login/route.ts\nexport async function POST(req: Request) {\n  const { password } = await req.json()\n  if (password !== process.env.ADMIN_PASSWORD) {\n    return Response.json({ error: '비밀번호가 올바르지 않습니다.' }, { status: 401 })\n  }\n  const token = await signJwt({ role: 'admin' })\n  const res = Response.json({ ok: true })\n  res.headers.set('Set-Cookie', `${ADMIN_SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`)\n  return res\n}\n\n// app/api/auth/logout/route.ts\nexport async function POST() {\n  const res = Response.redirect('/admin/login')\n  res.headers.set('Set-Cookie', `${ADMIN_SESSION_COOKIE}=; Path=/; HttpOnly; Max-Age=0`)\n  return res\n}",
+      "verificationCriteria": "POST /api/auth/login 올바른 비밀번호 → 200 + Set-Cookie, 틀린 비밀번호 → 401. POST /api/auth/logout → 쿠키 삭제",
+      "analysisResult": "Task 006: 관리자 인증 시스템 구축. 환경 변수 기반 비밀번호 인증과 jose JWT 세션 관리로 /admin 경로를 보호. Next.js 15 App Router, TypeScript, shadcn/ui 사용. Edge Runtime 호환을 위해 jose 라이브러리 사용."
+    },
+    {
+      "id": "403d53d7-da9c-4bea-9ed1-b3482ffaf589",
+      "name": "인증 미들웨어 구현",
+      "description": "middleware.ts에서 /admin 경로를 보호하는 Edge Middleware 구현",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "db1c3aa3-7de6-43b1-b595-52e5711b22a9"
+        }
+      ],
+      "createdAt": "2026-03-12T13:32:42.025Z",
+      "updatedAt": "2026-03-12T13:32:42.025Z",
+      "relatedFiles": [
+        {
+          "path": "middleware.ts",
+          "type": "CREATE",
+          "description": "인증 미들웨어"
+        },
+        {
+          "path": "lib/auth.ts",
+          "type": "DEPENDENCY",
+          "description": "JWT 유틸리티"
+        }
+      ],
+      "implementationGuide": "// middleware.ts (프로젝트 루트)\nimport { NextRequest, NextResponse } from 'next/server'\nimport { verifyJwt, ADMIN_SESSION_COOKIE } from '@/lib/auth'\n\nexport async function middleware(req: NextRequest) {\n  const { pathname } = req.nextUrl\n  // 로그인 페이지는 통과\n  if (pathname === '/admin/login') return NextResponse.next()\n\n  const token = req.cookies.get(ADMIN_SESSION_COOKIE)?.value\n  if (!token || !(await verifyJwt(token))) {\n    const loginUrl = new URL('/admin/login', req.url)\n    loginUrl.searchParams.set('redirect', pathname)\n    return NextResponse.redirect(loginUrl)\n  }\n  return NextResponse.next()\n}\n\nexport const config = {\n  matcher: ['/admin/:path*']\n}",
+      "verificationCriteria": "미인증 상태로 /admin 접근 시 /admin/login?redirect=/admin 으로 리디렉션, 인증 상태에서는 통과",
+      "analysisResult": "Task 006: 관리자 인증 시스템 구축. 환경 변수 기반 비밀번호 인증과 jose JWT 세션 관리로 /admin 경로를 보호. Next.js 15 App Router, TypeScript, shadcn/ui 사용. Edge Runtime 호환을 위해 jose 라이브러리 사용."
+    },
+    {
+      "id": "ece683b2-236a-4f35-88be-8e24b6d8a5f6",
+      "name": "로그인 페이지 UI 구현",
+      "description": "app/admin/login/page.tsx에 로그인 폼 구현 (Client Component)",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "cab183a3-4890-45b0-811c-6cdad6f47b9a"
+        }
+      ],
+      "createdAt": "2026-03-12T13:32:42.025Z",
+      "updatedAt": "2026-03-12T13:32:42.025Z",
+      "relatedFiles": [
+        {
+          "path": "app/admin/login/page.tsx",
+          "type": "CREATE",
+          "description": "로그인 페이지"
+        },
+        {
+          "path": "components/ui/input.tsx",
+          "type": "DEPENDENCY",
+          "description": "shadcn Input"
+        },
+        {
+          "path": "components/ui/button.tsx",
+          "type": "DEPENDENCY",
+          "description": "shadcn Button"
+        }
+      ],
+      "implementationGuide": "'use client'\n// shadcn/ui의 Input, Button 컴포넌트 사용\n// 상태: password, error, isLoading\n// 폼 제출 시 POST /api/auth/login 호출\n// 성공 시 searchParams.get('redirect') || '/admin' 으로 router.push\n// 실패 시 error 상태에 메시지 표시\n// 로딩 중 버튼 disabled + 스피너\n// 레이아웃: 화면 중앙 카드 형태",
+      "verificationCriteria": "비밀번호 입력 후 로그인 버튼 클릭 → 성공 시 /admin 이동, 실패 시 에러 메시지 표시",
+      "analysisResult": "Task 006: 관리자 인증 시스템 구축. 환경 변수 기반 비밀번호 인증과 jose JWT 세션 관리로 /admin 경로를 보호. Next.js 15 App Router, TypeScript, shadcn/ui 사용. Edge Runtime 호환을 위해 jose 라이브러리 사용."
+    },
+    {
+      "id": "e611d33e-71d5-4568-afbb-f151f7e29f9a",
+      "name": "임시 관리자 페이지 및 로그아웃 버튼 구현",
+      "description": "app/admin/page.tsx에 간단한 관리자 메인 페이지와 로그아웃 버튼 구현",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "ece683b2-236a-4f35-88be-8e24b6d8a5f6"
+        },
+        {
+          "taskId": "403d53d7-da9c-4bea-9ed1-b3482ffaf589"
+        }
+      ],
+      "createdAt": "2026-03-12T13:32:42.025Z",
+      "updatedAt": "2026-03-12T13:32:42.025Z",
+      "relatedFiles": [
+        {
+          "path": "app/admin/page.tsx",
+          "type": "CREATE",
+          "description": "임시 관리자 메인 페이지"
+        },
+        {
+          "path": "app/admin/login/page.tsx",
+          "type": "DEPENDENCY",
+          "description": "로그인 페이지"
+        }
+      ],
+      "implementationGuide": "// app/admin/page.tsx (Server Component)\n// '관리자 대시보드' 제목과 로그아웃 버튼 표시\n// 로그아웃 버튼은 Client Component로 분리: POST /api/auth/logout 호출 후 /admin/login으로 이동\n// Task 007에서 본격적인 대시보드로 교체 예정임을 주석으로 명시",
+      "verificationCriteria": "로그인 후 /admin 접근 시 관리자 페이지 표시, 로그아웃 버튼 클릭 시 /admin/login으로 이동",
+      "analysisResult": "Task 006: 관리자 인증 시스템 구축. 환경 변수 기반 비밀번호 인증과 jose JWT 세션 관리로 /admin 경로를 보호. Next.js 15 App Router, TypeScript, shadcn/ui 사용. Edge Runtime 호환을 위해 jose 라이브러리 사용."
+    },
+    {
+      "id": "363e2666-fe9e-4dd6-9963-73d756081549",
+      "name": "인증 플로우 E2E 테스트",
+      "description": "Playwright MCP를 활용해 전체 인증 플로우 테스트 수행",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "e611d33e-71d5-4568-afbb-f151f7e29f9a"
+        }
+      ],
+      "createdAt": "2026-03-12T13:32:42.025Z",
+      "updatedAt": "2026-03-12T13:32:42.025Z",
+      "relatedFiles": [
+        {
+          "path": "app/admin/page.tsx",
+          "type": "DEPENDENCY",
+          "description": "관리자 페이지"
+        },
+        {
+          "path": "app/admin/login/page.tsx",
+          "type": "DEPENDENCY",
+          "description": "로그인 페이지"
+        },
+        {
+          "path": "middleware.ts",
+          "type": "DEPENDENCY",
+          "description": "인증 미들웨어"
+        }
+      ],
+      "implementationGuide": "개발 서버(npm run dev) 실행 후 Playwright MCP로 아래 시나리오 순서대로 테스트:\n1. /admin 접근 → /admin/login 리디렉션 확인\n2. 틀린 비밀번호 입력 → 에러 메시지 확인\n3. 올바른 비밀번호 입력 → /admin 이동 확인\n4. 로그아웃 → /admin/login 이동 확인\n5. 로그아웃 후 /admin 접근 → /admin/login 리디렉션 확인",
+      "verificationCriteria": "모든 TC-001~TC-005 시나리오 통과",
+      "analysisResult": "Task 006: 관리자 인증 시스템 구축. 환경 변수 기반 비밀번호 인증과 jose JWT 세션 관리로 /admin 경로를 보호. Next.js 15 App Router, TypeScript, shadcn/ui 사용. Edge Runtime 호환을 위해 jose 라이브러리 사용."
+    }
+  ]
+}
