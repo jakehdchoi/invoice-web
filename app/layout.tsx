@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
@@ -16,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Next.js Starter Kit",
-  description: "Next.js 16 + React 19 + TypeScript + Tailwind CSS 4 + shadcn/ui 스타터킷",
+  title: "견적서 시스템",
+  description: "Notion 기반 견적서 조회 및 PDF 출력 시스템",
 };
 
 export default function RootLayout({
@@ -51,7 +50,6 @@ export default function RootLayout({
         <main className="flex-1">
           {children}
         </main>
-        <Footer />
         <Toaster />
       </body>
     </html>

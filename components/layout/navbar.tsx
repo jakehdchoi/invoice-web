@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FileText } from "lucide-react";
 import { NavLinks } from "./nav-links";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { MobileMenu } from "./mobile-menu";
@@ -10,8 +11,8 @@ export function Navbar() {
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         {/* 로고 */}
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <span className="text-lg">🚀</span>
-          <span>Next.js Starter</span>
+          <FileText className="h-5 w-5" />
+          <span>견적서 시스템</span>
         </Link>
 
         {/* 데스크탑 네비게이션 */}

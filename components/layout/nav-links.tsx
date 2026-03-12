@@ -6,8 +6,6 @@ import { cn } from "@/lib/utils";
 
 const links = [
   { href: "/", label: "홈" },
-  { href: "/about", label: "소개" },
-  { href: "/components", label: "컴포넌트" },
 ];
 
 interface NavLinksProps {
