@@ -19,10 +19,14 @@ function getText(property: PageObjectResponse["properties"][string]): string {
   return ""
 }
 
-// Notion 숫자 프로퍼티 추출 헬퍼
+// Notion 숫자 프로퍼티 추출 헬퍼 (number, formula 타입 지원)
 function getNumber(property: PageObjectResponse["properties"][string]): number {
   if (property.type === "number") {
     return property.number ?? 0
+  }
+  // formula 타입 (금액 계산식)
+  if (property.type === "formula" && property.formula.type === "number") {
+    return property.formula.number ?? 0
   }
   return 0
 }
@@ -35,79 +39,65 @@ function getDate(property: PageObjectResponse["properties"][string]): string {
   return ""
 }
 
-// Notion select 프로퍼티 추출 헬퍼
+// Notion select/status 프로퍼티 추출 헬퍼
 function getSelect(property: PageObjectResponse["properties"][string]): string {
   if (property.type === "select") {
     return property.select?.name ?? ""
   }
+  // Notion "status" 타입도 지원
+  if (property.type === "status") {
+    return property.status?.name ?? ""
+  }
   return ""
 }
 
-// Notion 페이지 블록(테이블)에서 품목 파싱
-async function getInvoiceItems(pageId: string): Promise<InvoiceItem[]> {
-  const blocks = await notion.blocks.children.list({ block_id: pageId })
+// Relation 프로퍼티에서 품목 DB 직접 조회
+async function getInvoiceItems(
+  relationProp: PageObjectResponse["properties"][string]
+): Promise<InvoiceItem[]> {
   const items: InvoiceItem[] = []
 
-  for (const block of blocks.results) {
-    if (!("type" in block)) continue
+  if (relationProp.type !== "relation") return items
 
-    // 테이블 블록 파싱
-    if (block.type === "table") {
-      const rows = await notion.blocks.children.list({ block_id: block.id })
-      let isHeader = true
+  for (const rel of relationProp.relation) {
+    try {
+      const itemPage = (await notion.pages.retrieve({ page_id: rel.id })) as PageObjectResponse
+      const p = itemPage.properties
 
-      for (const row of rows.results) {
-        if (!("type" in row) || row.type !== "table_row") continue
-        if (isHeader) {
-          isHeader = false
-          continue // 헤더 행 스킵
-        }
-
-        const cells = row.table_row.cells
-        // 컬럼 순서: 품목명, 수량, 단가, 소계, 비고
-        const name = cells[0]?.map((t) => t.plain_text).join("") ?? ""
-        const quantity = parseInt(cells[1]?.map((t) => t.plain_text).join("") ?? "0", 10)
-        const unitPrice = parseInt(cells[2]?.map((t) => t.plain_text).join("") ?? "0", 10)
-        const amount = parseInt(cells[3]?.map((t) => t.plain_text).join("") ?? "0", 10)
-        const note = cells[4]?.map((t) => t.plain_text).join("") ?? undefined
-
-        if (name) {
-          items.push({ id: row.id, name, quantity, unitPrice, amount, note: note || undefined })
-        }
-      }
+      items.push({
+        id: rel.id,
+        name: getText(p["항목명"]),
+        quantity: getNumber(p["수량"]),
+        unitPrice: getNumber(p["단가"]),
+        amount: getNumber(p["금액"]),
+      })
+    } catch (e) {
+      console.error("품목 조회 실패:", rel.id, e)
     }
   }
 
   return items
 }
 
-// 견적서 ID로 Notion 데이터베이스 조회
+// uuid 형식 검증 (Notion Page ID)
+const UUID_REGEX = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i
+
+// 견적서 Page ID로 Notion 직접 조회
 export async function getInvoiceById(id: string): Promise<Invoice | null> {
+  if (!UUID_REGEX.test(id)) return null
+
   try {
-    const response = await notion.search({
-      query: id,
-      filter: { value: "page", property: "object" },
-    })
-
-    if (response.results.length === 0) return null
-
-    // DATABASE_ID 기준으로 필터링 (search는 전체 워크스페이스 검색)
-    const page = response.results.find(
-      (r): r is PageObjectResponse =>
-        r.object === "page" &&
-        "parent" in r &&
-        r.parent.type === "database_id" &&
-        r.parent.database_id.replace(/-/g, "") === DATABASE_ID.replace(/-/g, "")
-    )
-
-    if (!page) return null
+    // page_id로 직접 조회 (search 방식 대신)
+    const page = (await notion.pages.retrieve({ page_id: id })) as PageObjectResponse
     const props = page.properties
 
-    const items = await getInvoiceItems(page.id)
+    // 항목 Relation 프로퍼티에서 품목 조회
+    const items = await getInvoiceItems(props["항목"])
 
-    const subtotal = getNumber(props["공급가액"])
-    const tax = getNumber(props["부가세"])
-    const total = getNumber(props["총액"])
+    // 총금액에서 공급가액/부가세 역산 (Notion DB에 별도 컬럼 없음)
+    const total = getNumber(props["총금액"])
+    const subtotal = Math.round(total / 1.1)
+    const tax = total - subtotal
 
     const statusMap: Record<string, Invoice["status"]> = {
       draft: "draft",
@@ -118,26 +108,52 @@ export async function getInvoiceById(id: string): Promise<Invoice | null> {
       발송: "sent",
       수락: "accepted",
       거절: "rejected",
+      대기: "sent", // Notion 실제 상태값 매핑
     }
     const rawStatus = getSelect(props["상태"])
     const status = statusMap[rawStatus] ?? "draft"
 
     return {
       id: page.id,
-      invoiceNumber: getText(props["견적번호"]),
+      invoiceNumber: getText(props["견적서번호"]),
       issueDate: getDate(props["발행일"]),
       validUntil: getDate(props["유효기간"]) || undefined,
-      clientName: getText(props["수신인"]),
-      clientContact: getText(props["연락처"]) || undefined,
+      clientName: getText(props["클라이언트명"]),
+      clientContact: props["연락처"] ? getText(props["연락처"]) || undefined : undefined,
       items,
       subtotal,
       tax,
       total,
-      notes: getText(props["비고"]) || undefined,
+      notes: props["비고"] ? getText(props["비고"]) || undefined : undefined,
       status,
     }
   } catch (error) {
     console.error("Notion 견적서 조회 실패:", error)
+    return null
+  }
+}
+
+// 견적서 번호(예: INV-2025-001)로 Page ID 조회
+export async function getPageIdByInvoiceNumber(invoiceNumber: string): Promise<string | null> {
+  try {
+    const response = await notion.search({
+      query: invoiceNumber,
+      filter: { value: "page", property: "object" },
+    })
+
+    const page = response.results.find(
+      (r): r is PageObjectResponse =>
+        r.object === "page" &&
+        "properties" in r &&
+        "database_id" in r.parent &&
+        (r.parent as { database_id: string }).database_id.replace(/-/g, "") ===
+          DATABASE_ID.replace(/-/g, "") &&
+        getText(r.properties["견적서번호"]) === invoiceNumber
+    )
+
+    return page?.id ?? null
+  } catch (error) {
+    console.error("견적서 번호 검색 실패:", error)
     return null
   }
 }
