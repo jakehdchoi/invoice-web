@@ -1,6 +1,7 @@
 import { FileText } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants"
+import InvoiceSearchForm from "@/components/invoice-search-form"
 
 // 홈 페이지 (Server Component)
 export default function HomePage() {
@@ -16,21 +17,10 @@ export default function HomePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>견적서 조회 방법</CardTitle>
-          <CardDescription>
-            견적서 번호를 URL에 입력하여 조회하세요.
-          </CardDescription>
+          <CardTitle>견적서 조회</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-md bg-muted px-4 py-3 font-mono text-sm">
-            /invoice/<span className="text-primary">견적서번호</span>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            예: 견적서 번호가 <code className="rounded bg-muted px-1 py-0.5 text-xs">INV-2024-001</code>인 경우
-          </p>
-          <div className="rounded-md bg-muted px-4 py-3 font-mono text-sm">
-            /invoice/<span className="text-primary">INV-2024-001</span>
-          </div>
+        <CardContent>
+          <InvoiceSearchForm />
         </CardContent>
       </Card>
     </div>

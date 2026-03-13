@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation"
-import { getInvoiceById } from "@/lib/notion"
+import { notFound, redirect } from "next/navigation"
+import { getInvoiceById, getPageIdByInvoiceNumber } from "@/lib/notion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -32,9 +32,14 @@ function formatCurrency(amount: number): string {
 // 견적서 상세 페이지 (Server Component)
 export default async function InvoicePage({ params }: InvoicePageProps) {
   const { id } = await params
-  const invoice = await getInvoiceById(id)
+  let invoice = await getInvoiceById(id)
 
+  // Page ID로 조회 실패 시 견적서 번호로 재검색 후 리다이렉트
   if (!invoice) {
+    const pageId = await getPageIdByInvoiceNumber(id)
+    if (pageId) {
+      redirect(`/invoice/${pageId}`)
+    }
     notFound()
   }
 
